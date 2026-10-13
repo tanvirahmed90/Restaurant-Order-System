@@ -1,0 +1,339 @@
+/* ===================================================================
+   ADMIN DASHBOARD & ANALYTICS MODULE STYLESHEET
+   Sleek Dark Modern Operations Center
+   =================================================================== */
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Admin Sidebar */
+.admin-sidebar {
+  width: 270px;
+  background: rgba(14, 18, 25, 0.95);
+  border-right: 1px solid var(--border-glass);
+  padding: 1.75rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 2.5rem;
+  padding-left: 0.5rem;
+}
+
+.admin-menu {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.admin-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1.15rem;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.admin-menu-item:hover, .admin-menu-item.active {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--primary);
+  border-left: 3px solid var(--primary);
+}
+
+.admin-menu-item i {
+  font-size: 1.1rem;
+}
+
+/* Admin Main Content */
+.admin-main {
+  flex: 1;
+  padding: 2.25rem 3rem;
+  overflow-y: auto;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+}
+
+.admin-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+/* KPI Cards Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  padding: 1.6rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all var(--transition-fast);
+}
+
+.kpi-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.kpi-data h4 {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.kpi-data .kpi-val {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.kpi-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.icon-revenue { background: rgba(245, 158, 11, 0.15); color: var(--primary); }
+.icon-orders { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+.icon-deliveries { background: rgba(239, 68, 68, 0.15); color: var(--accent-flame); }
+.icon-users { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+
+/* Analytics Section: Chart & Best Sellers */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1.1fr;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.chart-card, .sellers-card {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+}
+
+.chart-card h3, .sellers-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Visual Bar Chart */
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 180px;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-glass);
+  gap: 1rem;
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.bar-fill {
+  width: 100%;
+  max-width: 44px;
+  background: var(--primary-gradient);
+  border-radius: 6px 6px 0 0;
+  transition: height 0.6s ease;
+  position: relative;
+  min-height: 8px;
+}
+
+.bar-fill:hover {
+  filter: brightness(1.2);
+}
+
+.bar-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.bar-val {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Top Seller List */
+.seller-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.seller-item:last-child {
+  border-bottom: none;
+}
+
+.seller-item img {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.seller-info {
+  flex: 1;
+}
+
+.seller-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.seller-sales {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.seller-rev {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Management Tables */
+.table-card {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  margin-bottom: 2.5rem;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.admin-table th {
+  padding: 1rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border-glass);
+  font-weight: 700;
+}
+
+.admin-table td {
+  padding: 1.1rem 1rem;
+  font-size: 0.92rem;
+  border-bottom: 1px solid var(--border-glass);
+  color: var(--text-muted);
+}
+
+.admin-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+  color: #ffffff;
+}
+
+/* Status Badges */
+.status-pill {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-placed { background: rgba(245, 158, 11, 0.15); color: var(--primary); }
+.status-confirmed { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+.status-preparing { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+.status-out_for_delivery { background: rgba(239, 68, 68, 0.15); color: var(--accent-flame); }
+.status-delivered { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+.status-cancelled { background: rgba(100, 116, 139, 0.2); color: var(--text-dim); }
+
+/* Table Action Buttons */
+.action-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.btn-icon:hover {
+  background: var(--primary-gradient);
+  color: #fff;
+}
+
+.btn-icon.danger:hover {
+  background: var(--accent-flame);
+  color: #fff;
+}
