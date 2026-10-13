@@ -1,104 +1,151 @@
 <?php
-// config/database.php - PDO Database Connection and Auto-Migration
+// config/database.php - Hybrid PDO Database Engine (Cloud MySQL & SQLite Fallback for Vercel)
 
-define('DB_HOST', '127.0.0.1');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'restaurant_db');
+define('DB_HOST', getenv('DB_HOST') ?: (getenv('MYSQL_HOST') ?: '127.0.0.1'));
+define('DB_USER', getenv('DB_USER') ?: (getenv('MYSQL_USER') ?: 'root'));
+define('DB_PASS', getenv('DB_PASS') ?: (getenv('MYSQL_PASSWORD') ?: ''));
+define('DB_NAME', getenv('DB_NAME') ?: (getenv('MYSQL_DATABASE') ?: 'restaurant_db'));
+define('DB_PORT', getenv('DB_PORT') ?: (getenv('MYSQL_PORT') ?: '3306'));
 
 function getDBConnection() {
     static $pdo = null;
+    static $driver = null;
     if ($pdo !== null) {
         return $pdo;
     }
 
+    $isVercel = getenv('VERCEL') !== false || getenv('NOW_REGION') !== false;
+
+    // Try MySQL first if credentials exist or not strictly forced into SQLite
+    $useMysql = !empty(getenv('DB_HOST')) || !empty(getenv('MYSQL_HOST')) || !$isVercel;
+
+    if ($useMysql) {
+        try {
+            // Check if full MYSQL_URL or JAWSDB_URL provided
+            $url = getenv('MYSQL_URL') ?: getenv('JAWSDB_URL');
+            if ($url) {
+                $dbParts = parse_url($url);
+                $host = $dbParts['host'] ?? DB_HOST;
+                $port = $dbParts['port'] ?? DB_PORT;
+                $user = $dbParts['user'] ?? DB_USER;
+                $pass = $dbParts['pass'] ?? DB_PASS;
+                $name = ltrim($dbParts['path'] ?? DB_NAME, '/');
+
+                $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
+                $pdo = new PDO($dsn, $user, $pass, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                ]);
+            } else {
+                // Connect to host
+                $initPdo = new PDO("mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";charset=utf8mb4", DB_USER, DB_PASS, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_TIMEOUT => 3,
+                ]);
+                $initPdo->exec("CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+
+                $pdo = new PDO("mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4", DB_USER, DB_PASS, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                ]);
+            }
+
+            $driver = 'mysql';
+            initDatabaseTables($pdo, 'mysql');
+            return $pdo;
+        } catch (Exception $e) {
+            // If MySQL fails and we are on Vercel or cloud serverless, fallback seamlessly to SQLite
+            if ($isVercel || empty(getenv('DB_HOST'))) {
+                // Proceed to SQLite fallback below
+                error_log("MySQL connection failed ({$e->getMessage()}), falling back to SQLite for Vercel serverless.");
+            } else {
+                throw $e;
+            }
+        }
+    }
+
+    // SQLite Fallback (Runs natively in any cloud / Vercel serverless environment)
     try {
-        // Connect to server first without specifying DB
-        $pdoInit = new PDO("mysql:host=" . DB_HOST . ";charset=utf8mb4", DB_USER, DB_PASS, [
+        $sqliteDir = sys_get_temp_dir();
+        if (!is_writable($sqliteDir)) {
+            $sqliteDir = __DIR__ . '/../';
+        }
+        $sqliteFile = rtrim($sqliteDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'restaurant_db.sqlite';
+
+        $pdo = new PDO("sqlite:" . $sqliteFile, null, null, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
-
-        // Create database if it doesn't exist
-        $pdoInit->exec("CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
-
-        // Connect to the specific database
-        $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4", DB_USER, DB_PASS, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        ]);
-
-        // Ensure tables exist and seed default data
-        initDatabaseTables($pdo);
-
+        $driver = 'sqlite';
+        initDatabaseTables($pdo, 'sqlite');
         return $pdo;
-    } catch (PDOException $e) {
-        // Return JSON error if API request
+    } catch (Exception $e) {
         if (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
             http_response_code(500);
             header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => 'Database connection failed: ' . $e->getMessage()]);
+            echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
             exit;
         }
-        die("Database Connection Error: " . htmlspecialchars($e->getMessage()));
+        die("Database Initialization Error: " . htmlspecialchars($e->getMessage()));
     }
 }
 
-function initDatabaseTables($pdo) {
+function initDatabaseTables($pdo, $driver = 'mysql') {
+    $autoInc = ($driver === 'sqlite') ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INT AUTO_INCREMENT PRIMARY KEY';
+    $engine = ($driver === 'sqlite') ? '' : ' ENGINE=InnoDB';
+
     // 1. Users Table
     $pdo->exec("CREATE TABLE IF NOT EXISTS `users` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `id` {$autoInc},
         `name` VARCHAR(100) NOT NULL,
         `email` VARCHAR(150) NOT NULL UNIQUE,
         `password` VARCHAR(255) NOT NULL,
         `phone` VARCHAR(25) NULL,
         `address` TEXT NULL,
-        `role` ENUM('customer', 'admin', 'rider') DEFAULT 'customer',
+        `role` VARCHAR(20) DEFAULT 'customer',
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB;");
+    ){$engine};");
 
     // 2. Categories Table
     $pdo->exec("CREATE TABLE IF NOT EXISTS `categories` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `id` {$autoInc},
         `name` VARCHAR(80) NOT NULL,
         `slug` VARCHAR(80) NOT NULL UNIQUE,
         `icon` VARCHAR(50) DEFAULT 'utensils',
         `description` VARCHAR(255) NULL
-    ) ENGINE=InnoDB;");
+    ){$engine};");
 
     // 3. Food Items Table
     $pdo->exec("CREATE TABLE IF NOT EXISTS `food_items` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `id` {$autoInc},
         `category_id` INT NOT NULL,
         `name` VARCHAR(120) NOT NULL,
         `description` TEXT NOT NULL,
         `price` DECIMAL(10,2) NOT NULL,
         `discount_price` DECIMAL(10,2) NULL,
         `image` VARCHAR(255) NOT NULL,
-        `is_featured` TINYINT(1) DEFAULT 0,
-        `is_available` TINYINT(1) DEFAULT 1,
-        `dietary` ENUM('veg', 'non-veg') DEFAULT 'non-veg',
+        `is_featured` INT DEFAULT 0,
+        `is_available` INT DEFAULT 1,
+        `dietary` VARCHAR(20) DEFAULT 'non-veg',
         `prep_time` VARCHAR(20) DEFAULT '20-25 mins',
         `calories` INT DEFAULT 500,
         `rating` DECIMAL(2,1) DEFAULT 5.0,
         `reviews_count` INT DEFAULT 0,
-        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB;");
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ){$engine};");
 
     // 4. Riders Table
     $pdo->exec("CREATE TABLE IF NOT EXISTS `riders` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `id` {$autoInc},
         `user_id` INT NOT NULL,
         `vehicle_type` VARCHAR(50) DEFAULT 'Motorbike',
         `vehicle_number` VARCHAR(50) DEFAULT 'EV-7892',
-        `status` ENUM('available', 'on_delivery', 'offline') DEFAULT 'available',
-        FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB;");
+        `status` VARCHAR(20) DEFAULT 'available'
+    ){$engine};");
 
     // 5. Orders Table
     $pdo->exec("CREATE TABLE IF NOT EXISTS `orders` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `id` {$autoInc},
         `order_number` VARCHAR(30) NOT NULL UNIQUE,
         `user_id` INT NOT NULL,
         `rider_id` INT NULL,
@@ -107,44 +154,38 @@ function initDatabaseTables($pdo) {
         `delivery_fee` DECIMAL(10,2) DEFAULT 4.99,
         `tax` DECIMAL(10,2) DEFAULT 0.00,
         `total_amount` DECIMAL(10,2) NOT NULL,
-        `payment_method` ENUM('cod', 'card', 'upi') DEFAULT 'cod',
-        `payment_status` ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
-        `order_status` ENUM('placed', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled') DEFAULT 'placed',
+        `payment_method` VARCHAR(20) DEFAULT 'cod',
+        `payment_status` VARCHAR(20) DEFAULT 'pending',
+        `order_status` VARCHAR(30) DEFAULT 'placed',
         `delivery_address` TEXT NOT NULL,
         `delivery_phone` VARCHAR(25) NOT NULL,
         `special_notes` TEXT NULL,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
-        FOREIGN KEY (`rider_id`) REFERENCES `riders`(`id`) ON DELETE SET NULL
-    ) ENGINE=InnoDB;");
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ){$engine};");
 
     // 6. Order Items Table
     $pdo->exec("CREATE TABLE IF NOT EXISTS `order_items` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `id` {$autoInc},
         `order_id` INT NOT NULL,
         `food_item_id` INT NOT NULL,
         `item_name` VARCHAR(120) NOT NULL,
         `price` DECIMAL(10,2) NOT NULL,
         `quantity` INT NOT NULL,
-        `subtotal` DECIMAL(10,2) NOT NULL,
-        FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE CASCADE,
-        FOREIGN KEY (`food_item_id`) REFERENCES `food_items`(`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB;");
+        `subtotal` DECIMAL(10,2) NOT NULL
+    ){$engine};");
 
     // 7. Reviews Table
     $pdo->exec("CREATE TABLE IF NOT EXISTS `reviews` (
-        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `id` {$autoInc},
         `food_item_id` INT NOT NULL,
         `user_id` INT NOT NULL,
-        `rating` INT NOT NULL CHECK (`rating` >= 1 AND `rating` <= 5),
+        `rating` INT NOT NULL,
         `comment` TEXT NOT NULL,
-        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (`food_item_id`) REFERENCES `food_items`(`id`) ON DELETE CASCADE,
-        FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB;");
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ){$engine};");
 
-    // Seed initial users if table is empty
+    // Seed default users if empty
     $userCount = $pdo->query("SELECT COUNT(*) FROM `users`")->fetchColumn();
     if ($userCount == 0) {
         $adminPass = password_hash('admin123', PASSWORD_DEFAULT);
@@ -157,7 +198,6 @@ function initDatabaseTables($pdo) {
             ('Sarah Jenkins', 'customer@restaurant.com', '{$custPass}', '+1 (555) 837-1928', '405 Skyline Blvd, Apt 4B', 'customer');
         ");
 
-        // Seed rider record
         $riderUserId = $pdo->query("SELECT id FROM users WHERE email = 'rider@restaurant.com'")->fetchColumn();
         if ($riderUserId) {
             $pdo->exec("INSERT INTO `riders` (`user_id`, `vehicle_type`, `vehicle_number`, `status`) VALUES
@@ -183,7 +223,6 @@ function initDatabaseTables($pdo) {
     // Seed food items if empty
     $itemCount = $pdo->query("SELECT COUNT(*) FROM `food_items`")->fetchColumn();
     if ($itemCount == 0) {
-        // Get category IDs
         $cats = $pdo->query("SELECT id, slug FROM `categories`")->fetchAll(PDO::FETCH_KEY_PAIR);
         $catBurgers = $cats['burgers'] ?? 2;
         $catPizzas = $cats['pizzas'] ?? 3;
@@ -202,7 +241,6 @@ function initDatabaseTables($pdo) {
             ({$catDrinks}, 'Sparkling Wild Berry Mojito', 'Hand-muddled blackberries, fresh garden mint, zesty Key lime juice, pure cane syrup, topped with effervescent sparkling soda and crushed crystal ice.', 6.99, 5.99, 'assets/images/mojito.jpg', 1, 1, 'veg', '5 min', 140, 4.8, 12);
         ");
 
-        // Seed initial reviews
         $burgerId = $pdo->query("SELECT id FROM food_items WHERE name LIKE '%Smash%' LIMIT 1")->fetchColumn();
         $pizzaId = $pdo->query("SELECT id FROM food_items WHERE name LIKE '%Margherita%' LIMIT 1")->fetchColumn();
         $custId = $pdo->query("SELECT id FROM users WHERE email = 'customer@restaurant.com' LIMIT 1")->fetchColumn();
@@ -214,26 +252,19 @@ function initDatabaseTables($pdo) {
             ");
         }
 
-        // Seed initial sample order for order tracking & analytics demo
         $riderRecord = $pdo->query("SELECT id FROM riders LIMIT 1")->fetchColumn();
         if ($custId && $burgerId) {
             $pdo->exec("INSERT INTO `orders` (`order_number`, `user_id`, `rider_id`, `subtotal`, `discount`, `delivery_fee`, `tax`, `total_amount`, `payment_method`, `payment_status`, `order_status`, `delivery_address`, `delivery_phone`, `special_notes`) VALUES
-                ('ORD-882194', {$custId}, {$riderRecord}, 22.98, 3.00, 4.99, 1.84, 26.81, 'card', 'completed', 'out_for_delivery', '405 Skyline Blvd, Apt 4B, Metro City', '+1 (555) 837-1928', 'Please leave at the door with doorman if not answering.');
-            ");
-            $orderId = $pdo->lastInsertId();
-            $pdo->exec("INSERT INTO `order_items` (`order_id`, `food_item_id`, `item_name`, `price`, `quantity`, `subtotal`) VALUES
-                ({$orderId}, {$burgerId}, 'Smash Truffle Double Cheeseburger', 13.99, 1, 13.99),
-                ({$orderId}, {$burgerId} + 3, 'Korean Sweet & Spicy Glazed Wings', 11.50, 1, 11.50);
-            ");
-
-            // Another delivered order for revenue stats
-            $pdo->exec("INSERT INTO `orders` (`order_number`, `user_id`, `rider_id`, `subtotal`, `discount`, `delivery_fee`, `tax`, `total_amount`, `payment_method`, `payment_status`, `order_status`, `delivery_address`, `delivery_phone`, `special_notes`) VALUES
+                ('ORD-882194', {$custId}, {$riderRecord}, 22.98, 3.00, 4.99, 1.84, 26.81, 'card', 'completed', 'out_for_delivery', '405 Skyline Blvd, Apt 4B, Metro City', '+1 (555) 837-1928', 'Please leave at the door with doorman if not answering.'),
                 ('ORD-741029', {$custId}, {$riderRecord}, 35.49, 5.00, 4.99, 2.84, 38.32, 'upi', 'completed', 'delivered', '405 Skyline Blvd, Apt 4B, Metro City', '+1 (555) 837-1928', 'Extra napkins appreciated!');
             ");
-            $orderId2 = $pdo->lastInsertId();
+            $orderId = 1;
+            $orderId2 = 2;
             $pdo->exec("INSERT INTO `order_items` (`order_id`, `food_item_id`, `item_name`, `price`, `quantity`, `subtotal`) VALUES
-                ({$orderId2}, {$pizzaId}, 'Artisanal Woodfired Margherita', 14.50, 1, 14.50),
-                ({$orderId2}, {$burgerId} + 4, 'Molten Belgian Chocolate Lava Cake', 8.99, 2, 17.98);
+                (1, {$burgerId}, 'Smash Truffle Double Cheeseburger', 13.99, 1, 13.99),
+                (1, 4, 'Korean Sweet & Spicy Glazed Wings', 11.50, 1, 11.50),
+                (2, {$pizzaId}, 'Artisanal Woodfired Margherita', 14.50, 1, 14.50),
+                (2, 5, 'Molten Belgian Chocolate Lava Cake', 8.99, 2, 17.98);
             ");
         }
     }
