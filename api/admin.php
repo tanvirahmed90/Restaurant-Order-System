@@ -1,6 +1,6 @@
 <?php
 // api/admin.php - Admin Dashboard, Delivery Management & Reports API
-session_start();
+require_once __DIR__ . '/../config/session.php';
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config/database.php';
 
@@ -56,9 +56,9 @@ if ($action === 'stats') {
     ");
     $popularItems = $popStmt->fetchAll();
 
-    // 7. Recent 7 Days Revenue Trend
+    // 7. Recent 7 Days Revenue Trend (Cross-platform compatible with both MySQL and SQLite)
     $trendStmt = $pdo->query("
-        SELECT DATE_FORMAT(created_at, '%b %d') as date_label,
+        SELECT DATE(created_at) as raw_date,
                COALESCE(SUM(total_amount), 0) as daily_revenue,
                COUNT(*) as orders_count
         FROM orders
@@ -68,6 +68,10 @@ if ($action === 'stats') {
         LIMIT 7
     ");
     $revenueTrend = $trendStmt->fetchAll();
+    foreach ($revenueTrend as &$trendItem) {
+        $trendItem['date_label'] = !empty($trendItem['raw_date']) ? date('M d', strtotime($trendItem['raw_date'])) : 'Today';
+    }
+    unset($trendItem);
 
     echo json_encode([
         'success' => true,

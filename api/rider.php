@@ -1,6 +1,6 @@
 <?php
 // api/rider.php - Delivery Rider Module API
-session_start();
+require_once __DIR__ . '/../config/session.php';
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config/database.php';
 

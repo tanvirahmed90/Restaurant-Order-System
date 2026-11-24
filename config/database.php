@@ -37,17 +37,30 @@ function getDBConnection() {
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 ]);
             } else {
-                // Connect to host
-                $initPdo = new PDO("mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";charset=utf8mb4", DB_USER, DB_PASS, [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_TIMEOUT => 3,
-                ]);
-                $initPdo->exec("CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+                // Try connecting directly to database first (standard for cloud hosted MySQL)
+                try {
+                    $pdo = new PDO("mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4", DB_USER, DB_PASS, [
+                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                        PDO::ATTR_TIMEOUT => 4,
+                    ]);
+                } catch (Exception $eDirect) {
+                    // If DB doesn't exist, try creating it (local MySQL / XAMPP / root)
+                    try {
+                        $initPdo = new PDO("mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";charset=utf8mb4", DB_USER, DB_PASS, [
+                            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                            PDO::ATTR_TIMEOUT => 3,
+                        ]);
+                        $initPdo->exec("CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
 
-                $pdo = new PDO("mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4", DB_USER, DB_PASS, [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                ]);
+                        $pdo = new PDO("mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4", DB_USER, DB_PASS, [
+                            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                        ]);
+                    } catch (Exception $eCreate) {
+                        throw $eDirect;
+                    }
+                }
             }
 
             $driver = 'mysql';
@@ -57,7 +70,7 @@ function getDBConnection() {
             // If MySQL fails and we are on Vercel or cloud serverless, fallback seamlessly to SQLite
             if ($isVercel || empty(getenv('DB_HOST'))) {
                 // Proceed to SQLite fallback below
-                error_log("MySQL connection failed ({$e->getMessage()}), falling back to SQLite for Vercel serverless.");
+                @error_log("MySQL connection failed ({$e->getMessage()}), falling back to SQLite for Vercel serverless.");
             } else {
                 throw $e;
             }
@@ -253,10 +266,11 @@ function initDatabaseTables($pdo, $driver = 'mysql') {
         }
 
         $riderRecord = $pdo->query("SELECT id FROM riders LIMIT 1")->fetchColumn();
+        $riderVal = ($riderRecord !== false && $riderRecord !== null) ? (int)$riderRecord : 'NULL';
         if ($custId && $burgerId) {
             $pdo->exec("INSERT INTO `orders` (`order_number`, `user_id`, `rider_id`, `subtotal`, `discount`, `delivery_fee`, `tax`, `total_amount`, `payment_method`, `payment_status`, `order_status`, `delivery_address`, `delivery_phone`, `special_notes`) VALUES
-                ('ORD-882194', {$custId}, {$riderRecord}, 22.98, 3.00, 4.99, 1.84, 26.81, 'card', 'completed', 'out_for_delivery', '405 Skyline Blvd, Apt 4B, Metro City', '+1 (555) 837-1928', 'Please leave at the door with doorman if not answering.'),
-                ('ORD-741029', {$custId}, {$riderRecord}, 35.49, 5.00, 4.99, 2.84, 38.32, 'upi', 'completed', 'delivered', '405 Skyline Blvd, Apt 4B, Metro City', '+1 (555) 837-1928', 'Extra napkins appreciated!');
+                ('ORD-882194', {$custId}, {$riderVal}, 22.98, 3.00, 4.99, 1.84, 26.81, 'card', 'completed', 'out_for_delivery', '405 Skyline Blvd, Apt 4B, Metro City', '+1 (555) 837-1928', 'Please leave at the door with doorman if not answering.'),
+                ('ORD-741029', {$custId}, {$riderVal}, 35.49, 5.00, 4.99, 2.84, 38.32, 'upi', 'completed', 'delivered', '405 Skyline Blvd, Apt 4B, Metro City', '+1 (555) 837-1928', 'Extra napkins appreciated!');
             ");
             $orderId = 1;
             $orderId2 = 2;

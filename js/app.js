@@ -49,7 +49,7 @@ const App = {
   // =========================================================================
   async checkAuthStatus() {
     try {
-      const res = await fetch('api/auth.php?action=me');
+      const res = await fetch('/api/auth.php?action=me');
       const data = await res.json();
       if (data.success && data.user) {
         this.setUser(data.user);
@@ -120,7 +120,7 @@ const App = {
     const password = document.getElementById('login-password').value;
 
     try {
-      const res = await fetch('api/auth.php?action=login', {
+      const res = await fetch('/api/auth.php?action=login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -147,7 +147,7 @@ const App = {
     const address = document.getElementById('reg-address').value;
 
     try {
-      const res = await fetch('api/auth.php?action=register', {
+      const res = await fetch('/api/auth.php?action=register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, phone, address, role: 'customer' })
@@ -167,7 +167,7 @@ const App = {
 
   async handleLogout() {
     try {
-      await fetch('api/auth.php?action=logout', { method: 'POST' });
+      await fetch('/api/auth.php?action=logout', { method: 'POST' });
       this.setUser(null);
       this.closeProfileModal();
       this.showToast('Logged out successfully.', 'success');
@@ -204,7 +204,7 @@ const App = {
     const new_password = document.getElementById('profile-new-pwd').value;
 
     try {
-      const res = await fetch('api/auth.php?action=update_profile', {
+      const res = await fetch('/api/auth.php?action=update_profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, address, new_password })
@@ -230,7 +230,7 @@ const App = {
 
     listEl.innerHTML = '<p style="color:var(--text-dim);">Loading order history...</p>';
     try {
-      const res = await fetch(`api/orders.php?action=my_orders&user_id=${this.user.id}`);
+      const res = await fetch(`/api/orders.php?action=my_orders&user_id=${this.user.id}`);
       const data = await res.json();
       if (data.success && data.orders.length > 0) {
         listEl.innerHTML = data.orders.map(o => `
@@ -262,7 +262,7 @@ const App = {
   // =========================================================================
   async loadCategories() {
     try {
-      const res = await fetch('api/menu.php?action=categories');
+      const res = await fetch('/api/menu.php?action=categories');
       const data = await res.json();
       if (data.success) {
         this.categories = data.categories;
@@ -323,7 +323,7 @@ const App = {
     });
 
     try {
-      const res = await fetch(`api/menu.php?${params.toString()}`);
+      const res = await fetch(`/api/menu.php?${params.toString()}`);
       const data = await res.json();
       if (data.success) {
         this.menuItems = data.items;
@@ -395,7 +395,7 @@ const App = {
     if (!modal) return;
 
     try {
-      const res = await fetch(`api/menu.php?action=item_detail&id=${id}`);
+      const res = await fetch(`/api/menu.php?action=item_detail&id=${id}`);
       const data = await res.json();
       if (!data.success) return;
 
@@ -506,7 +506,7 @@ const App = {
     }
 
     try {
-      const res = await fetch('api/reviews.php?action=add', {
+      const res = await fetch('/api/reviews.php?action=add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -620,7 +620,7 @@ const App = {
     const subtotal = this.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
 
     try {
-      const res = await fetch('api/orders.php?action=validate_promo', {
+      const res = await fetch('/api/orders.php?action=validate_promo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, subtotal })
@@ -797,7 +797,7 @@ const App = {
     }
 
     try {
-      const res = await fetch('api/orders.php?action=create', {
+      const res = await fetch('/api/orders.php?action=create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -845,7 +845,7 @@ const App = {
     content.innerHTML = '<div style="text-align:center; padding:3rem;"><i class="fa-solid fa-circle-notch fa-spin fa-2x"></i><p style="margin-top:0.75rem;">Fetching live order timeline...</p></div>';
 
     try {
-      const res = await fetch(`api/orders.php?action=track&order_number=${orderNumber}`);
+      const res = await fetch(`/api/orders.php?action=track&order_number=${orderNumber}`);
       const data = await res.json();
       if (!data.success) {
         content.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--accent-flame);"><i class="fa-solid fa-circle-exclamation fa-2x"></i><p style="margin-top:0.5rem;">${data.error}</p></div>`;

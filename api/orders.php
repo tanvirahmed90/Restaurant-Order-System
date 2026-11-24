@@ -1,6 +1,6 @@
 <?php
 // api/orders.php - Order Management & Payment Processing API
-session_start();
+require_once __DIR__ . '/../config/session.php';
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config/database.php';
 

@@ -1,6 +1,6 @@
 <?php
 // api/reviews.php - Customer Food Reviews & Ratings API
-session_start();
+require_once __DIR__ . '/../config/session.php';
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config/database.php';
 

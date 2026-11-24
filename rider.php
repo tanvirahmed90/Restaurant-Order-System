@@ -18,13 +18,13 @@ $pdo = getDBConnection();
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body style="background:var(--bg-dark);">
 
   <header class="navbar">
     <div class="container nav-container">
-      <a href="index.php" class="brand-logo">
+      <a href="/index.php" class="brand-logo">
         <div class="brand-icon" style="background:linear-gradient(135deg, #10b981 0%, #06b6d4 100%);">
           <i class="fa-solid fa-motorcycle"></i>
         </div>
@@ -32,10 +32,10 @@ $pdo = getDBConnection();
       </a>
 
       <div style="display:flex; align-items:center; gap:1rem;">
-        <a href="index.php" class="btn-secondary" style="font-size:0.85rem;">
+        <a href="/index.php" class="btn-secondary" style="font-size:0.85rem;">
           <i class="fa-solid fa-store"></i> Storefront
         </a>
-        <a href="admin/index.php" class="btn-secondary" style="font-size:0.85rem;">
+        <a href="/admin/index.php" class="btn-secondary" style="font-size:0.85rem;">
           <i class="fa-solid fa-shield-halved"></i> Admin HQ
         </a>
       </div>
@@ -98,7 +98,7 @@ $pdo = getDBConnection();
 
       async loadProfile() {
         try {
-          const res = await fetch(`api/rider.php?action=profile&rider_id=${this.riderId}`);
+          const res = await fetch(`/api/rider.php?action=profile&rider_id=${this.riderId}`);
           const data = await res.json();
           if (data.success && data.rider) {
             document.getElementById('rider-name').innerText = data.rider.name;
@@ -117,7 +117,7 @@ $pdo = getDBConnection();
         list.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-dim);"><i class="fa-solid fa-circle-notch fa-spin"></i> Refreshing routes...</div>';
 
         try {
-          const res = await fetch(`api/rider.php?action=assigned_orders&rider_id=${this.riderId}`);
+          const res = await fetch(`/api/rider.php?action=assigned_orders&rider_id=${this.riderId}`);
           const data = await res.json();
           if (!data.success) return;
 
@@ -201,7 +201,7 @@ $pdo = getDBConnection();
 
       async updateStatus(orderId, status) {
         try {
-          const res = await fetch('api/rider.php?action=update_status', {
+          const res = await fetch('/api/rider.php?action=update_status', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ order_id: orderId, status: status })

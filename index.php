@@ -21,7 +21,7 @@ $pdo = getDBConnection();
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
@@ -30,7 +30,7 @@ $pdo = getDBConnection();
   <!-- ================================================================= -->
   <header class="navbar">
     <div class="container nav-container">
-      <a href="index.php" class="brand-logo">
+      <a href="/index.php" class="brand-logo">
         <div class="brand-icon">
           <i class="fa-solid fa-utensils"></i>
         </div>
@@ -40,8 +40,8 @@ $pdo = getDBConnection();
       <ul class="nav-links">
         <li><a href="#menu" class="nav-link active">Menu</a></li>
         <li><a href="javascript:void(0)" onclick="App.trackOrder('ORD-882194')" class="nav-link"><i class="fa-solid fa-location-dot"></i> Live Tracker</a></li>
-        <li><a href="rider.php" class="nav-link"><i class="fa-solid fa-motorcycle"></i> Courier Portal</a></li>
-        <li><a href="admin/index.php" class="nav-link"><i class="fa-solid fa-shield-halved"></i> Admin Panel</a></li>
+        <li><a href="/rider.php" class="nav-link"><i class="fa-solid fa-motorcycle"></i> Courier Portal</a></li>
+        <li><a href="/admin/index.php" class="nav-link"><i class="fa-solid fa-shield-halved"></i> Admin Panel</a></li>
       </ul>
 
       <div class="nav-actions">
@@ -105,7 +105,7 @@ $pdo = getDBConnection();
 
       <div class="hero-card-showcase">
         <div class="showcase-card">
-          <img src="assets/images/burger.jpg" alt="Chef Special Smash Truffle Double Cheeseburger">
+          <img src="/assets/images/burger.jpg" alt="Chef Special Smash Truffle Double Cheeseburger">
           <div class="showcase-overlay">
             <div>
               <span class="module-badge">Chef's Signature</span>
@@ -467,6 +467,6 @@ $pdo = getDBConnection();
   <div id="toast-container" class="toast-box"></div>
 
   <!-- Scripts -->
-  <script src="js/app.js"></script>
+  <script src="/js/app.js"></script>
 </body>
 </html>

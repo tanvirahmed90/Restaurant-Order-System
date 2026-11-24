@@ -19,8 +19,8 @@ $pdo = getDBConnection();
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Core & Admin Stylesheets -->
-  <link rel="stylesheet" href="../css/style.css">
-  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
 </head>
 <body style="background:var(--bg-dark);">
 
@@ -60,7 +60,7 @@ $pdo = getDBConnection();
       </ul>
 
       <div style="border-top:1px solid var(--border-glass); padding-top:1rem; margin-top:auto;">
-        <a href="../index.php" class="btn-secondary" style="width:100%; justify-content:center; font-size:0.85rem;">
+        <a href="/index.php" class="btn-secondary" style="width:100%; justify-content:center; font-size:0.85rem;">
           <i class="fa-solid fa-arrow-left"></i> Customer Storefront
         </a>
       </div>
@@ -78,7 +78,7 @@ $pdo = getDBConnection();
           <h1>Restaurant Management Console</h1>
         </div>
         <div style="display:flex; align-items:center; gap:1rem;">
-          <a href="../rider.php" target="_blank" class="btn-secondary" style="font-size:0.85rem;">
+          <a href="/rider.php" target="_blank" class="btn-secondary" style="font-size:0.85rem;">
             <i class="fa-solid fa-mobile-screen"></i> Courier App View
           </a>
           <button class="btn-primary" onclick="AdminApp.openAddItemModal()">
@@ -358,6 +358,6 @@ $pdo = getDBConnection();
   <div id="toast-container" class="toast-box"></div>
 
   <!-- Admin JS Engine -->
-  <script src="../js/admin.js"></script>
+  <script src="/js/admin.js"></script>
 </body>
 </html>

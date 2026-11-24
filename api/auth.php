@@ -1,6 +1,6 @@
 <?php
 // api/auth.php - User Authentication & Profile API
-session_start();
+require_once __DIR__ . '/../config/session.php';
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config/database.php';
 

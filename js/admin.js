@@ -60,7 +60,7 @@ const AdminApp = {
   // =========================================================================
   async loadStats() {
     try {
-      const res = await fetch('../api/admin.php?action=stats');
+      const res = await fetch('/api/admin.php?action=stats');
       const data = await res.json();
       if (!data.success) return;
 
@@ -123,7 +123,7 @@ const AdminApp = {
   // =========================================================================
   async loadCategories() {
     try {
-      const res = await fetch('../api/menu.php?action=categories');
+      const res = await fetch('/api/menu.php?action=categories');
       const data = await res.json();
       if (data.success) {
         this.categories = data.categories;
@@ -146,7 +146,7 @@ const AdminApp = {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading dishes...</td></tr>';
 
     try {
-      const res = await fetch('../api/admin.php?action=items_list');
+      const res = await fetch('/api/admin.php?action=items_list');
       const data = await res.json();
       if (!data.success) return;
 
@@ -238,7 +238,7 @@ const AdminApp = {
     const action = isEdit ? 'item_update' : 'item_create';
 
     try {
-      const res = await fetch(`../api/admin.php?action=${action}`, {
+      const res = await fetch(`/api/admin.php?action=${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -258,7 +258,7 @@ const AdminApp = {
 
   async toggleItemAvailability(id) {
     try {
-      const res = await fetch('../api/admin.php?action=item_toggle', {
+      const res = await fetch('/api/admin.php?action=item_toggle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
@@ -276,7 +276,7 @@ const AdminApp = {
   async deleteItem(id) {
     if (!confirm('Are you sure you want to permanently delete this culinary item?')) return;
     try {
-      const res = await fetch('../api/admin.php?action=item_delete', {
+      const res = await fetch('/api/admin.php?action=item_delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
@@ -305,7 +305,7 @@ const AdminApp = {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading live orders...</td></tr>';
 
     try {
-      const res = await fetch(`../api/admin.php?action=orders_list&status=${filterStatus}`);
+      const res = await fetch(`/api/admin.php?action=orders_list&status=${filterStatus}`);
       const data = await res.json();
       if (!data.success) return;
 
@@ -353,7 +353,7 @@ const AdminApp = {
 
   async updateOrderStatus(order_id, status) {
     try {
-      const res = await fetch('../api/admin.php?action=order_update_status', {
+      const res = await fetch('/api/admin.php?action=order_update_status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order_id, status })
@@ -374,7 +374,7 @@ const AdminApp = {
   async assignRider(order_id, rider_id) {
     if (!rider_id) return;
     try {
-      const res = await fetch('../api/admin.php?action=assign_rider', {
+      const res = await fetch('/api/admin.php?action=assign_rider', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order_id, rider_id })
@@ -398,7 +398,7 @@ const AdminApp = {
   async loadRiders() {
     const tbody = document.getElementById('admin-riders-tbody');
     try {
-      const res = await fetch('../api/admin.php?action=riders_list');
+      const res = await fetch('/api/admin.php?action=riders_list');
       const data = await res.json();
       if (!data.success) return;
 
@@ -441,7 +441,7 @@ const AdminApp = {
     if (!tbody) return;
 
     try {
-      const res = await fetch('../api/admin.php?action=users_list');
+      const res = await fetch('/api/admin.php?action=users_list');
       const data = await res.json();
       if (!data.success) return;
 
